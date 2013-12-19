@@ -1,0 +1,37 @@
+<html>
+  <head>
+    <script src="http://192.168.1.103:8080/_ah/channel/jsapi"></script>
+  </head>
+  <!--
+  Helper HTML that redirects Google AppEngine's Channel API to a JS object named
+  |androidMessageHandler|, which is expected to be injected into the WebView
+  rendering this page by an Android app's class such as AppRTCClient.
+  -->
+  <body onbeforeunload="closeSocket()" onload="openSocket()">
+    <script type="text/javascript">
+      var token = androidMessageHandler.getToken();
+      if (!token)
+        throw "Missing/malformed token parameter: [" + token + "]";
+
+      var channel = null;
+      var socket = null;
+
+      function openSocket() {
+        console.log("Entered openSocket in html template, token: " + token);
+        channel = new goog.appengine.Channel(token);
+        console.log("Entered openSocket in html template, channel: " + channel);
+        socket = channel.open({
+          'onopen': function() { console.log("Entered opened channel"); androidMessageHandler.onOpen(); },
+          'onmessage': function(msg) { androidMessageHandler.onMessage(msg.data); },
+          'onclose': function() { androidMessageHandler.onClose(); },
+          'onerror': function(err) { console.log("Entered on error in the html"); androidMessageHandler.onError(err.code, err.description); }
+        });
+      }
+
+      function closeSocket() {
+        socket.close();
+      }
+    </script>
+  </body>
+</html>
+
